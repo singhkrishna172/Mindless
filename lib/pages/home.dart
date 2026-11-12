@@ -182,10 +182,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
   }
 
+  // ignore: unused_element
   Future<void> _openMinimalLauncher() async {
-    await Navigator.of(context).push(
-      createMindlessPageRoute(const MinimalLauncherPage(isManual: true)),
-    );
+    await Navigator.of(
+      context,
+    ).push(createMindlessPageRoute(const MinimalLauncherPage(isManual: true)));
   }
 
   // --- TOP BAR ---
@@ -946,8 +947,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 // ==========================================
 // HELPER MODELS & CUSTOM PAINTERS
 // ==========================================
-
-
 
 /// Custom painter for the circular streak progress ring
 class _StreakProgressPainter extends CustomPainter {

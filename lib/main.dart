@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mindless/pages/home.dart';
+import 'package:mindless/pages/splash.dart';
 import 'package:mindless/providers/usage_limit_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -25,7 +25,7 @@ class MindlessApp extends StatelessWidget {
             surface: const Color(0xFFFAF7F2),
           ),
         ),
-        home: const HomePage(),
+        home: const SplashScreen(),
       ),
     );
   }
