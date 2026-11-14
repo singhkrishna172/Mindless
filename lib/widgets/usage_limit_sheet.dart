@@ -6,20 +6,35 @@ import '../providers/usage_limit_provider.dart';
 
 /// Shows an interactive modal bottom sheet to set the daily usage limit using
 /// an interactive clock (TimePicker) or duration stepper/presets.
-Future<void> showUsageLimitSheet(BuildContext context) async {
-  await showModalBottomSheet<void>(
+Future<bool> showUsageLimitSheet(
+  BuildContext context, {
+  bool isFirstTimeSetup = false,
+  VoidCallback? onLimitSaved,
+}) async {
+  final result = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
+    isDismissible: !isFirstTimeSetup,
     backgroundColor: const Color(0xFFFAF7F2),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
-    builder: (sheetContext) => const _UsageLimitSheetContent(),
+    builder: (sheetContext) => _UsageLimitSheetContent(
+      isFirstTimeSetup: isFirstTimeSetup,
+      onLimitSaved: onLimitSaved,
+    ),
   );
+  return result ?? false;
 }
 
 class _UsageLimitSheetContent extends StatefulWidget {
-  const _UsageLimitSheetContent();
+  final bool isFirstTimeSetup;
+  final VoidCallback? onLimitSaved;
+
+  const _UsageLimitSheetContent({
+    this.isFirstTimeSetup = false,
+    this.onLimitSaved,
+  });
 
   @override
   State<_UsageLimitSheetContent> createState() =>
@@ -131,12 +146,14 @@ class _UsageLimitSheetContentState extends State<_UsageLimitSheetContent> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Daily Usage Limit',
-                      style: TextStyle(
+                      widget.isFirstTimeSetup
+                          ? 'Set Your Daily Target'
+                          : 'Daily Usage Limit',
+                      style: const TextStyle(
                         fontFamily: 'serif',
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
@@ -144,10 +161,12 @@ class _UsageLimitSheetContentState extends State<_UsageLimitSheetContent> {
                         letterSpacing: -0.3,
                       ),
                     ),
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
                     Text(
-                      'Set screen time limit using clock or timer',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF66716A)),
+                      widget.isFirstTimeSetup
+                          ? 'Choose your screen time target for today'
+                          : 'Set screen time limit using clock or timer',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF66716A)),
                     ),
                   ],
                 ),
@@ -317,7 +336,8 @@ class _UsageLimitSheetContentState extends State<_UsageLimitSheetContent> {
               child: ElevatedButton(
                 onPressed: () {
                   usage.setDailyLimit(newDuration);
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
+                  widget.onLimitSaved?.call();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       backgroundColor: const Color(0xFF132F21),
@@ -331,7 +351,7 @@ class _UsageLimitSheetContentState extends State<_UsageLimitSheetContent> {
                               color: Color(0xFF7CE2A5), size: 18),
                           const SizedBox(width: 10),
                           Text(
-                            'Daily limit updated to ${_selectedHours}h ${_selectedMinutes}m',
+                            'Daily limit set to ${_selectedHours}h ${_selectedMinutes}m',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -347,9 +367,11 @@ class _UsageLimitSheetContentState extends State<_UsageLimitSheetContent> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  'Save Daily Limit',
-                  style: TextStyle(
+                child: Text(
+                  widget.isFirstTimeSetup
+                      ? 'Set Limit & Start Day'
+                      : 'Save Daily Limit',
+                  style: const TextStyle(
                     fontSize: 15.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -358,22 +380,36 @@ class _UsageLimitSheetContentState extends State<_UsageLimitSheetContent> {
             ),
             const SizedBox(height: 8),
 
-            // Secondary option: Manage essential apps
-            TextButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const UsageSettingsPage(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.tune_rounded, size: 16),
-              label: const Text('Manage essential launcher apps'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF485149),
+            if (widget.isFirstTimeSetup)
+              TextButton(
+                onPressed: () {
+                  // Use default 5h limit
+                  usage.setDailyLimit(const Duration(hours: 5));
+                  Navigator.pop(context, true);
+                  widget.onLimitSaved?.call();
+                },
+                child: const Text(
+                  'Keep default (5 hours) for today',
+                  style: TextStyle(color: Color(0xFF66716A), fontSize: 13),
+                ),
+              )
+            else
+              // Secondary option: Manage essential apps
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const UsageSettingsPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.tune_rounded, size: 16),
+                label: const Text('Manage essential launcher apps'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF485149),
+                ),
               ),
-            ),
           ],
         ),
       ),

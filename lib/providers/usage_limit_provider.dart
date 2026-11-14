@@ -15,6 +15,7 @@ class UsageLimitProvider extends ChangeNotifier {
   final DeviceUsageService _service;
 
   DateTime? _cycleStartDate;
+  DateTime? _lastLimitSetupDate;
   Duration _todayUsage = Duration.zero;
   List<Duration> _lastSevenDaysUsage = const [];
   List<AppUsage> _mostUsedApps = const [];
@@ -26,10 +27,23 @@ class UsageLimitProvider extends ChangeNotifier {
   String? _errorMessage;
 
   Duration get dailyLimit => _dailyLimit;
+  DateTime? get lastLimitSetupDate => _lastLimitSetupDate;
+  bool get isNewUser => _lastLimitSetupDate == null;
+
+  /// Returns true if user is new or if a new 24-hour cycle (calendar day) has started
+  bool get needsDailyLimitSetup {
+    if (_lastLimitSetupDate == null) return true;
+    final now = DateTime.now();
+    final lastDay = _dateOnly(_lastLimitSetupDate!);
+    final today = _dateOnly(now);
+    return today.isAfter(lastDay);
+  }
 
   void setDailyLimit(Duration limit) {
     if (limit > Duration.zero) {
       _dailyLimit = limit;
+      _lastLimitSetupDate = DateTime.now();
+      _saveConfiguration();
       notifyListeners();
     }
   }
@@ -89,6 +103,14 @@ class UsageLimitProvider extends ChangeNotifier {
                 const <dynamic>[]))
           packageName as String,
       };
+      final limitMinutes = configuration['dailyLimitMinutes'] as int?;
+      if (limitMinutes != null && limitMinutes > 0) {
+        _dailyLimit = Duration(minutes: limitMinutes);
+      }
+      final lastSetupStr = configuration['lastLimitSetupDate'] as String?;
+      if (lastSetupStr != null) {
+        _lastLimitSetupDate = DateTime.tryParse(lastSetupStr);
+      }
       if (startDate == null) {
         await _saveConfiguration();
       }
@@ -158,6 +180,10 @@ class UsageLimitProvider extends ChangeNotifier {
           .toIso8601String()
           .substring(0, 10),
       essentialPackages: _essentialPackages,
+      dailyLimitMinutes: _dailyLimit.inMinutes,
+      lastLimitSetupDate: _lastLimitSetupDate != null
+          ? _dateOnly(_lastLimitSetupDate!).toIso8601String().substring(0, 10)
+          : null,
     );
   }
 

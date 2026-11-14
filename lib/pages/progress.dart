@@ -3,7 +3,9 @@ import 'package:mindless/navigation/navbar.dart';
 import 'package:mindless/pages/focus_timer.dart';
 import 'package:mindless/pages/home.dart';
 import 'package:mindless/pages/minimal_launcher.dart';
+import 'package:mindless/providers/usage_limit_provider.dart';
 import 'package:mindless/widgets/usage_limit_sheet.dart';
+import 'package:provider/provider.dart';
 
 /// The Wellbeing Impact & Progress Screen for MindLess
 class ProgressPage extends StatefulWidget {
@@ -18,6 +20,11 @@ class _ProgressPageState extends State<ProgressPage> {
 
   @override
   Widget build(BuildContext context) {
+    final usage = context.watch<UsageLimitProvider>();
+    if (usage.isLimitReached) {
+      return const MinimalLauncherPage();
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAF7F2),
       body: SafeArea(

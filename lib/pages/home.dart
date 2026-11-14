@@ -32,25 +32,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       const Duration(seconds: 30),
       (_) => context.read<UsageLimitProvider>().refresh(),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _promptForUsageAccess();
-    });
-  }
-
-  Future<void> _promptForUsageAccess() async {
-    final usage = context.read<UsageLimitProvider>();
-    if (!usage.isAndroid || _hasPromptedForUsageAccess) return;
-
-    await usage.refresh();
-    if (!mounted ||
-        usage.hasUsageAccess ||
-        usage.errorMessage != null ||
-        _hasPromptedForUsageAccess) {
-      return;
-    }
-
-    _hasPromptedForUsageAccess = true;
-    await _showUsageAccessDialog();
   }
 
   Future<void> _showUsageAccessDialog() async {

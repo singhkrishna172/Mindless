@@ -32,6 +32,14 @@ class MainActivity : FlutterActivity() {
                                     "essential_packages",
                                     emptySet(),
                                 )?.toList().orEmpty(),
+                                "dailyLimitMinutes" to preferences.getInt(
+                                    "daily_limit_minutes",
+                                    -1,
+                                ),
+                                "lastLimitSetupDate" to preferences.getString(
+                                    "last_limit_setup_date",
+                                    null,
+                                ),
                             ),
                         )
                     }
@@ -40,6 +48,11 @@ class MainActivity : FlutterActivity() {
                         val cycleStartDate = call.argument<String>("cycleStartDate")
                         val essentialPackages =
                             call.argument<List<String>>("essentialPackages")
+                        val dailyLimitMinutes =
+                            call.argument<Int>("dailyLimitMinutes") ?: -1
+                        val lastLimitSetupDate =
+                            call.argument<String>("lastLimitSetupDate")
+
                         if (cycleStartDate == null || essentialPackages == null) {
                             result.error(
                                 "INVALID_CONFIGURATION",
@@ -47,13 +60,19 @@ class MainActivity : FlutterActivity() {
                                 null,
                             )
                         } else {
-                            preferences.edit()
+                            val editor = preferences.edit()
                                 .putString("cycle_start_date", cycleStartDate)
                                 .putStringSet(
                                     "essential_packages",
                                     essentialPackages.toSet(),
                                 )
-                                .apply()
+                            if (dailyLimitMinutes > 0) {
+                                editor.putInt("daily_limit_minutes", dailyLimitMinutes)
+                            }
+                            if (lastLimitSetupDate != null) {
+                                editor.putString("last_limit_setup_date", lastLimitSetupDate)
+                            }
+                            editor.apply()
                             result.success(null)
                         }
                     }

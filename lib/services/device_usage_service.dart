@@ -44,10 +44,14 @@ class DeviceUsageService {
   Future<void> saveConfiguration({
     required String cycleStartDate,
     required Set<String> essentialPackages,
+    int? dailyLimitMinutes,
+    String? lastLimitSetupDate,
   }) {
     return _channel.invokeMethod<void>('saveConfiguration', {
       'cycleStartDate': cycleStartDate,
       'essentialPackages': essentialPackages.toList(),
+      if (dailyLimitMinutes != null) 'dailyLimitMinutes': dailyLimitMinutes,
+      if (lastLimitSetupDate != null) 'lastLimitSetupDate': lastLimitSetupDate,
     });
   }
 
